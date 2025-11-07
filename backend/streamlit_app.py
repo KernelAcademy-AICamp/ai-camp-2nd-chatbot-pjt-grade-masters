@@ -472,15 +472,6 @@ def llm_feedback_for_wrong_answer(item: dict, user_answer: str) -> str:
 
 
 
-
-
-
-
-
-
-
-
-
 # --- UI ---
 st.set_page_config(page_title="학점 마스터 - PDF 요약", page_icon="🎓", layout="centered")
 st.title("🎓 학점 마스터 — PDF 통합 요약(5줄)")
@@ -562,67 +553,6 @@ if go:
         st.write(summary)
         with st.expander("통합 원문(일부) 보기"):
             st.text(merged_text[:100000])
-
-
-# st.markdown("---")
-# st.subheader("💬 문서 기반 질문/답변 (Q&A)")
-
-# question = st.text_input("문서에 대해 궁금한 점을 질문하세요")
-# ask_btn = st.button("질문하기", disabled=not question)
-
-# if ask_btn:
-#     doc_text = st.session_state.get("doc_text")
-#     if not doc_text:
-#         st.warning("먼저 PDF를 업로드하고 통합 요약(텍스트 추출)을 완료해주세요.")
-#     else:
-#         with st.spinner("문서에서 답을 찾는 중..."):
-#             answer = answer_from_doc(doc_text, question)
-#         st.success("답변")
-#         st.write(answer)
-
-#         # (선택) 모델에 전달한 컨텍스트 일부 확인용
-#         with st.expander("모델에 전달된 컨텍스트(일부) 보기"):
-#             st.text(build_qa_context(doc_text, question)[:8000])
-
-
-# st.markdown("---")
-# st.subheader("📝 문서 기반 문제 생성 (객관식/주관식)")
-
-# n_items = st.slider("문항 수", 3, 5, 4, 1)
-# gen_btn = st.button("문제 생성하기", type="primary")
-
-# if gen_btn:
-#     doc_text = st.session_state.get("doc_text")
-#     if not doc_text:
-#         st.warning("먼저 PDF를 업로드하고 통합 요약(텍스트 추출)을 완료해주세요.")
-#     else:
-#         try:
-#             with st.spinner("문서 전체를 분석하고 문제를 생성 중..."):
-#                 quiz = generate_quiz_from_doc(doc_text, num_items=n_items)
-
-#             st.success("문제 생성 완료")
-#             for idx, item in enumerate(quiz["items"], start=1):
-#                 st.markdown(f"**Q{idx}. {item['question']}**")
-#                 if item["type"] == "mcq":
-#                     st.write(f"- 보기: {', '.join(item['options'])}")
-#                     st.write(f"- 정답 인덱스: {item['answer_index']}")
-#                 else:
-#                     st.write(f"- 기준정답: {item['answer']}")
-#                     st.write(f"- 채점키워드: {', '.join(item['rubric_keywords'])}")
-#                 st.caption(f"해설: {item.get('explanation','(없음)')}")
-
-#             # JSON 다운로드
-#             st.download_button(
-#                 "퀴즈 JSON 다운로드",
-#                 data=json.dumps(quiz, ensure_ascii=False, indent=2),
-#                 file_name="quiz.json",
-#                 mime="application/json",
-#             )
-#         except Exception as e:
-#             st.error(f"문제 생성 중 오류: {e}")
-
-
-#############
 
 
 st.markdown("---")
