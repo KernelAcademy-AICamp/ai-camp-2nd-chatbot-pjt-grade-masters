@@ -13,8 +13,8 @@ export const APP_CONFIG = {
 // ========================================
 
 export const API_CONFIG = {
-  baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
-  timeout: 30000, // 30 seconds
+  baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || '',
+  timeout: 1800000, // 30 minutes
   retryAttempts: 3,
   retryDelay: 1000, // 1 second
 } as const;
@@ -36,8 +36,10 @@ export const FILE_CONFIG = {
 export const QUESTION_CONFIG = {
   difficulties: ['easy', 'medium', 'hard'] as const,
   types: ['essay', 'short_answer'] as const,
-  countOptions: [5, 10, 15, 20] as const,
-  defaultCount: 10,
+  countOptions: [3, 4, 5] as const,
+  minCount: 3,
+  maxCount: 5,
+  defaultCount: 4,
   defaultDifficulty: 'medium' as const,
   defaultType: 'short_answer' as const,
 } as const;
@@ -65,6 +67,7 @@ export const ROUTES = {
   exam: '/exam',
   wrongAnswers: '/wrong-answers',
   analytics: '/analytics',
+  health: '/health',
 } as const;
 
 // ========================================

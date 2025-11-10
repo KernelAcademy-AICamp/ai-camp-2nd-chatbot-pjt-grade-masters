@@ -69,41 +69,41 @@ export function useWrongAnswers(): UseWrongAnswersReturn {
   // Add wrong answers from exam result
   const addWrongAnswers = useCallback(
     (result: ExamResult, questions: Question[]) => {
-      const newWrongAnswers: WrongAnswer[] = result.results
-        .filter((r) => !r.isCorrect)
-        .map((gradingResult) => {
-          const question = questions.find((q) => q.id === gradingResult.questionId);
-          if (!question) return null;
-
-          // Check if this question already exists in wrong answers
-          const existing = wrongAnswers.find(
-            (wa) => wa.questionId === gradingResult.questionId
-          );
-
-          if (existing) {
-            // Update retry count
-            return {
-              ...existing,
-              retryCount: existing.retryCount + 1,
-              lastRetryAt: new Date(),
-            };
-          }
-
-          // Create new wrong answer entry
-          return {
-            id: crypto.randomUUID(),
-            questionId: gradingResult.questionId,
-            question,
-            userAnswer: '', // Will be populated from submission
-            correctAnswer: gradingResult.modelAnswer || '',
-            feedback: gradingResult.feedback,
-            retryCount: 1,
-            isResolved: false,
-          };
-        })
-        .filter((wa): wa is WrongAnswer => wa !== null);
-
       setWrongAnswers((prev) => {
+        const newWrongAnswers: WrongAnswer[] = result.results
+          .filter((r) => !r.isCorrect)
+          .map((gradingResult) => {
+            const question = questions.find((q) => q.id === gradingResult.questionId);
+            if (!question) return null;
+
+            // Check if this question already exists in wrong answers
+            const existing = prev.find(
+              (wa) => wa.questionId === gradingResult.questionId
+            );
+
+            if (existing) {
+              // Update retry count
+              return {
+                ...existing,
+                retryCount: existing.retryCount + 1,
+                lastRetryAt: new Date(),
+              };
+            }
+
+            // Create new wrong answer entry
+            return {
+              id: crypto.randomUUID(),
+              questionId: gradingResult.questionId,
+              question,
+              userAnswer: '', // Will be populated from submission
+              correctAnswer: gradingResult.modelAnswer || '',
+              feedback: gradingResult.feedback,
+              retryCount: 1,
+              isResolved: false,
+            };
+          })
+          .filter((wa): wa is WrongAnswer => wa !== null);
+
         // Merge new wrong answers with existing ones
         const merged = [...prev];
         newWrongAnswers.forEach((newWa) => {
@@ -119,7 +119,7 @@ export function useWrongAnswers(): UseWrongAnswersReturn {
         return merged;
       });
     },
-    [wrongAnswers]
+    []
   );
 
   // Mark wrong answer as resolved

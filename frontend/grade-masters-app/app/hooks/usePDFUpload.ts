@@ -17,6 +17,7 @@ interface UseFileUploadReturn {
   error: UploadError | null;
   uploadFile: (file: File, onComplete?: (fileId: string) => void) => Promise<void>;
   removeFile: (id: string) => void;
+  resetAllFiles: () => void;
   clearError: () => void;
 }
 
@@ -64,66 +65,31 @@ export function usePDFUpload(): UseFileUploadReturn {
     setIsUploading(true);
 
     try {
-      // TODO: Replace with actual API call when backend is ready
-      // Temporary mock upload for development
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Mock successful upload response
-      const mockResponse = {
-        success: true,
-        data: {
-          fileId: crypto.randomUUID(),
-          fileName: file.name,
-          fileSize: file.size,
-          pageCount: Math.floor(Math.random() * 50) + 10, // Random 10-60 pages
-          uploadedAt: new Date().toISOString(),
-        },
-      };
-
-      // Update file with mock response
-      setFiles(prev =>
-        prev.map(f =>
-          f.id === tempFile.id
-            ? {
-                ...f,
-                id: mockResponse.data.fileId,
-                status: 'completed' as const,
-                pageCount: mockResponse.data.pageCount,
-              }
-            : f
-        )
-      );
-
-      // Show success message
-      console.log(SUCCESS_MESSAGES.fileUpload);
-
-      // Call onComplete callback if provided
-      if (onComplete) {
-        onComplete(mockResponse.data.fileId);
-      }
-
-      /*
-      // Original API call (restore when backend is ready):
+      // Call actual API
       const response = await uploadPDF(file);
 
-      if (response.success && response.data) {
+      if (response && response.document_id) {
         setFiles(prev =>
           prev.map(f =>
             f.id === tempFile.id
               ? {
                   ...f,
-                  id: response.data.fileId,
+                  id: response.document_id,
                   status: 'completed' as const,
-                  pageCount: response.data.pageCount,
+                  pageCount: response.page_count,
                 }
               : f
           )
         );
         console.log(SUCCESS_MESSAGES.fileUpload);
+
+        // Call onComplete callback if provided
+        if (onComplete) {
+          onComplete(response.document_id);
+        }
       } else {
-        throw new Error(response.error || 'Upload failed');
+        throw new Error('Upload failed');
       }
-      */
     } catch (err) {
       console.error('Upload error:', err);
 
@@ -149,12 +115,18 @@ export function usePDFUpload(): UseFileUploadReturn {
     setFiles(prev => prev.filter(f => f.id !== id));
   }, []);
 
+  const resetAllFiles = useCallback(() => {
+    setFiles([]);
+    clearError();
+  }, [clearError]);
+
   return {
     files,
     isUploading,
     error,
     uploadFile,
     removeFile,
+    resetAllFiles,
     clearError,
   };
 }

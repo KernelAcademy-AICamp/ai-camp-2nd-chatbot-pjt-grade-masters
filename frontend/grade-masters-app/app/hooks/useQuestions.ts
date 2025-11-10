@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { generateQuestions } from '../services/api';
+import { generateQuiz } from '../services/api';
 import type {
   QuestionSet,
   Question,
@@ -48,44 +48,41 @@ export function useQuestions(): UseQuestionsReturn {
       setError(null);
 
       try {
-        const request: QuestionGenerationRequest = {
-          fileId,
-          count: options.count,
-          difficulty: options.difficulty,
-          type: options.type,
-          topics: options.topics,
-        };
+        // Call actual API
+        console.log(`Requesting ${options.count} questions...`);
+        const response = await generateQuiz(fileId, options.count);
 
-        // TODO: Replace with actual API call
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        // Generate mock questions
-        const mockQuestions: Question[] = Array.from(
-          { length: options.count },
-          (_, i) => ({
-            id: crypto.randomUUID(),
-            content:
-              options.type === 'short_answer'
-                ? `[${options.difficulty}] 단답형 문제 ${i + 1}: 이 주제에 대해 간단히 설명하세요.`
-                : `[${options.difficulty}] 서술형 문제 ${i + 1}: 이 개념에 대해 자세히 설명하고, 실제 사례를 들어 논하세요.`,
+        if (response && response.quiz_id && response.items) {
+          const questions: Question[] = response.items.map((item: any, index: number) => ({
+            id: item.id || `question-${response.quiz_id}-${index}`,
+            content: item.question || '',
             type: options.type,
             difficulty: options.difficulty,
             points: options.type === 'short_answer' ? 5 : 10,
             topic: options.topics?.[0],
-          })
-        );
+          }));
 
-        const mockQuestionSet: QuestionSet = {
-          id: crypto.randomUUID(),
-          name: `${new Date().toLocaleDateString()} 생성 문제`,
-          fileId,
-          questions: mockQuestions,
-          createdAt: new Date(),
-          totalPoints: mockQuestions.reduce((sum, q) => sum + q.points, 0),
-        };
+          // Check if we got the requested number of questions
+          if (questions.length !== options.count) {
+            console.warn(
+              `Expected ${options.count} questions but received ${questions.length}`
+            );
+          }
 
-        setQuestionSet(mockQuestionSet);
+          const quizSet: QuestionSet = {
+            id: response.quiz_id,
+            name: `${new Date().toLocaleDateString()} 생성 문제`,
+            fileId,
+            questions,
+            createdAt: new Date(),
+            totalPoints: questions.reduce((sum, q) => sum + q.points, 0),
+          };
+
+          setQuestionSet(quizSet);
+          console.log(`Successfully generated ${questions.length} questions`);
+        } else {
+          throw new Error('Quiz generation failed');
+        }
       } catch (err) {
         console.error('Failed to generate questions:', err);
         setError('문제 생성에 실패했습니다. 다시 시도해주세요.');

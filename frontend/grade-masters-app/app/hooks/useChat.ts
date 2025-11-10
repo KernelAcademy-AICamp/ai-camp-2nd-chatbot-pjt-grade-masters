@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { askQuestion } from '../services/api';
 import { storage } from '../utils/helpers';
 import { STORAGE_KEYS } from '../utils/constants';
 import type { ChatMessage, ChatSession } from '@/types';
@@ -72,22 +73,24 @@ export function useChat(fileId?: string): UseChatReturn {
       setIsTyping(true);
 
       try {
-        // TODO: Replace with actual API call in Sprint 2.3
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        // Call actual API
+        const response = await askQuestion(fileId, content);
 
-        // Simulate AI response
-        const aiMessage: ChatMessage = {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: `[Mock Response] "${content}"에 대한 답변입니다. 실제 AI 응답은 백엔드 API 연동 후 작동합니다.`,
-          timestamp: new Date(),
-          metadata: {
-            fileId,
-          },
-        };
+        if (response && response.answer) {
+          const aiMessage: ChatMessage = {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: response.answer,
+            timestamp: new Date(),
+            metadata: {
+              fileId,
+            },
+          };
 
-        setMessages((prev) => [...prev, aiMessage]);
+          setMessages((prev) => [...prev, aiMessage]);
+        } else {
+          throw new Error('Failed to get response');
+        }
       } catch (error) {
         console.error('Failed to send message:', error);
 

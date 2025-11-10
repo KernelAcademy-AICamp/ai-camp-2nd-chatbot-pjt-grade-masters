@@ -100,7 +100,7 @@ export default function WrongAnswersPage() {
         <WrongAnswersList
           wrongAnswers={filteredAnswers}
           onRetry={retryQuestion}
-          onResolve={markAsResolved}
+          onMarkResolved={markAsResolved}
           onDelete={deleteWrongAnswer}
         />
 

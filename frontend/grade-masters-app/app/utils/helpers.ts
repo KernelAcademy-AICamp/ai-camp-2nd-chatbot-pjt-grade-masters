@@ -10,7 +10,7 @@ export const formatFileSize = (bytes: number): string => {
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 };
 
-export const validateFileType = (file: File, allowedTypes: string[]): boolean => {
+export const validateFileType = (file: File, allowedTypes: readonly string[]): boolean => {
   return allowedTypes.includes(file.type);
 };
 

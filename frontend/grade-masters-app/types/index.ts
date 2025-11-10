@@ -33,11 +33,11 @@ export interface PDFFile {
 }
 
 export interface PDFUploadResponse {
-  fileId: string;
-  fileName: string;
-  fileSize: number;
-  pageCount: number;
-  uploadedAt: string;
+  document_id: string;
+  file_name?: string;
+  file_size?: number;
+  page_count?: number;
+  uploaded_at?: string;
 }
 
 // ========================================
@@ -223,6 +223,80 @@ export interface StudySession {
   duration?: number; // in minutes
   questionsAttempted: number;
   score?: number;
+}
+
+// Backend API Response Types for Analytics
+export interface AnalyticsOverview {
+  period_days: number;
+  total_documents: number;
+  total_quizzes: number;
+  total_quiz_attempts: number;
+  average_accuracy: number;
+  total_wrong_answers: number;
+  recent_documents: number;
+  recent_quiz_attempts: number;
+}
+
+export interface RecentResult {
+  result_id: string;
+  quiz_id: string;
+  document_name: string;
+  accuracy: number;
+  created_at: string;
+}
+
+export interface LearningProgress {
+  recent_results: RecentResult[];
+  average_accuracy: number;
+  trend: 'improving' | 'stable' | 'no_data';
+  total_count: number;
+}
+
+export interface WeakTopic {
+  document_id: string;
+  document_name: string;
+  attempt_count: number;
+  average_accuracy: number;
+  recommendation: string;
+}
+
+export interface WeakTopicsResponse {
+  weak_topics: WeakTopic[];
+  total_count: number;
+}
+
+export interface WrongAnswerItem {
+  wrong_answer_id: string;
+  document_name: string;
+  question: string;
+  user_answer: string;
+  correct_answer: string;
+  explanation: string;
+  created_at: string;
+}
+
+export interface WrongAnswerAnalysis {
+  wrong_answers: WrongAnswerItem[];
+  pattern_analysis: {
+    total_wrong_answers: number;
+    recent_mistakes: WrongAnswerItem[];
+    recommendation: string;
+  };
+  total_count: number;
+}
+
+export interface DailyStat {
+  date: string;
+  quiz_attempts: number;
+  average_accuracy: number;
+}
+
+export interface StudyTimeAnalysis {
+  period_days: number;
+  daily_stats: DailyStat[];
+  total_quiz_attempts: number;
+  active_days: number;
+  average_daily_attempts: number;
 }
 
 // ========================================

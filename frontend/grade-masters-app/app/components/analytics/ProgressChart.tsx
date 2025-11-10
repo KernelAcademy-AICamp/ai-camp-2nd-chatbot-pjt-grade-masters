@@ -1,28 +1,14 @@
 import { memo } from 'react';
-import { cn, formatPercentage } from '@/app/utils/helpers';
+import { formatPercentage } from '@/app/utils/helpers';
+import type { RecentResult } from '@/types';
 
 interface ProgressChartProps {
-  totalQuestions: number;
-  averageScore: number;
+  recentResults: RecentResult[];
+  trend: 'improving' | 'stable' | 'no_data';
 }
 
-function ProgressChart({ totalQuestions, averageScore }: ProgressChartProps) {
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-600 bg-green-500';
-    if (score >= 80) return 'text-blue-600 bg-blue-500';
-    if (score >= 70) return 'text-yellow-600 bg-yellow-500';
-    return 'text-red-600 bg-red-500';
-  };
-
-  const getScoreGrade = (score: number) => {
-    if (score >= 90) return 'A';
-    if (score >= 80) return 'B';
-    if (score >= 70) return 'C';
-    if (score >= 60) return 'D';
-    return 'F';
-  };
-
-  if (totalQuestions === 0) {
+function ProgressChart({ recentResults, trend }: ProgressChartProps) {
+  if (recentResults.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <svg
@@ -44,81 +30,96 @@ function ProgressChart({ totalQuestions, averageScore }: ProgressChartProps) {
     );
   }
 
-  const scoreColor = getScoreColor(averageScore);
-  const grade = getScoreGrade(averageScore);
+  // Calculate average accuracy
+  const averageAccuracy =
+    recentResults.reduce((sum, result) => sum + result.accuracy, 0) / recentResults.length;
+
+  // Get trend info
+  const getTrendInfo = () => {
+    switch (trend) {
+      case 'improving':
+        return {
+          icon: '📈',
+          text: '상승 중',
+          color: 'text-green-600',
+          bgColor: 'bg-green-500/10',
+        };
+      case 'stable':
+        return {
+          icon: '➡️',
+          text: '안정',
+          color: 'text-blue-600',
+          bgColor: 'bg-blue-500/10',
+        };
+      default:
+        return {
+          icon: '📊',
+          text: '데이터 없음',
+          color: 'text-muted-foreground',
+          bgColor: 'bg-muted',
+        };
+    }
+  };
+
+  const trendInfo = getTrendInfo();
 
   return (
     <div className="space-y-6">
-      {/* Score Circle */}
-      <div className="flex items-center justify-center">
-        <div className="relative">
-          <svg className="h-40 w-40 transform -rotate-90">
-            <circle
-              cx="80"
-              cy="80"
-              r="70"
-              stroke="currentColor"
-              strokeWidth="12"
-              fill="none"
-              className="text-muted"
-            />
-            <circle
-              cx="80"
-              cy="80"
-              r="70"
-              stroke="currentColor"
-              strokeWidth="12"
-              fill="none"
-              strokeDasharray={`${2 * Math.PI * 70}`}
-              strokeDashoffset={`${2 * Math.PI * 70 * (1 - averageScore / 100)}`}
-              className={cn(scoreColor.split(' ')[1])}
-              strokeLinecap="round"
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className={cn('text-3xl font-bold', scoreColor.split(' ')[0])}>
-              {grade}
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {formatPercentage(averageScore, 0)}
-            </div>
+      {/* Average Score Display */}
+      <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+        <div>
+          <p className="text-sm text-muted-foreground mb-1">평균 정확도</p>
+          <p className="text-3xl font-bold">{formatPercentage(averageAccuracy)}</p>
+        </div>
+        <div className={`px-3 py-2 rounded-lg ${trendInfo.bgColor}`}>
+          <div className="flex items-center gap-2">
+            <span className="text-xl">{trendInfo.icon}</span>
+            <span className={`text-sm font-medium ${trendInfo.color}`}>{trendInfo.text}</span>
           </div>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 text-center">
-        <div className="p-3 rounded-lg bg-muted/50">
-          <div className="text-2xl font-bold">{totalQuestions}</div>
-          <div className="text-xs text-muted-foreground">총 문제 수</div>
-        </div>
-        <div className="p-3 rounded-lg bg-muted/50">
-          <div className="text-2xl font-bold">{formatPercentage(averageScore, 0)}</div>
-          <div className="text-xs text-muted-foreground">평균 점수</div>
-        </div>
-      </div>
-
-      {/* Progress Levels */}
+      {/* Recent Results List */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">F</span>
-          <span className="text-muted-foreground">D</span>
-          <span className="text-muted-foreground">C</span>
-          <span className="text-muted-foreground">B</span>
-          <span className="text-muted-foreground">A</span>
-        </div>
-        <div className="relative h-2 bg-muted rounded-full overflow-hidden">
-          <div className="absolute inset-0 flex">
-            <div className="h-full bg-red-500" style={{ width: '20%' }} />
-            <div className="h-full bg-orange-500" style={{ width: '20%' }} />
-            <div className="h-full bg-yellow-500" style={{ width: '20%' }} />
-            <div className="h-full bg-blue-500" style={{ width: '20%' }} />
-            <div className="h-full bg-green-500" style={{ width: '20%' }} />
-          </div>
-          <div
-            className="absolute top-0 bottom-0 w-1 bg-white shadow-lg"
-            style={{ left: `${averageScore}%` }}
-          />
+        <h4 className="text-sm font-medium text-muted-foreground">최근 시험 결과</h4>
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {recentResults.map((result) => {
+            const getAccuracyColor = (accuracy: number) => {
+              if (accuracy >= 90) return 'bg-green-500';
+              if (accuracy >= 80) return 'bg-blue-500';
+              if (accuracy >= 70) return 'bg-yellow-500';
+              return 'bg-red-500';
+            };
+
+            const date = new Date(result.created_at);
+            const formattedDate = date.toLocaleDateString('ko-KR', {
+              month: 'short',
+              day: 'numeric',
+            });
+
+            return (
+              <div
+                key={result.result_id}
+                className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent transition-colors"
+              >
+                <div className="flex-1 min-w-0 mr-3">
+                  <p className="text-sm font-medium truncate">{result.document_name}</p>
+                  <p className="text-xs text-muted-foreground">{formattedDate}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${getAccuracyColor(result.accuracy)} transition-all`}
+                      style={{ width: `${result.accuracy}%` }}
+                    />
+                  </div>
+                  <span className="text-sm font-bold w-12 text-right">
+                    {formatPercentage(result.accuracy, 0)}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

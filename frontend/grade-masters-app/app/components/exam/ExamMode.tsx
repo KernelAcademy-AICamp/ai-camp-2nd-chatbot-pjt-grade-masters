@@ -127,7 +127,18 @@ export default function ExamMode({
 
   const handleSubmit = () => {
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
-    const answersArray = Object.values(answers);
+
+    // Sort answers by question order to match backend expectations
+    const answersArray = questions.map((question) =>
+      answers[question.id] || {
+        questionId: question.id,
+        content: '', // Empty answer for unanswered questions
+        submittedAt: new Date(),
+        isFlagged: flaggedQuestions.has(question.id),
+      }
+    );
+
+    console.log('Submitting answers in order:', answersArray);
     onSubmit(answersArray, timeSpent);
     localStorage.removeItem('exam-state');
     setShowSubmitModal(false);
@@ -161,9 +172,9 @@ export default function ExamMode({
               <div
                 className={cn(
                   'flex items-center gap-2 text-sm font-medium',
-                  timeLimit &&
-                    getRemainingTime()! < 300 &&
-                    'text-destructive animate-pulse'
+                  timeLimit && getRemainingTime()! < 300
+                    ? 'text-destructive animate-pulse'
+                    : undefined
                 )}
               >
                 <svg

@@ -6,12 +6,12 @@ import { formatFileSize } from '@/app/utils/helpers';
 import { cn } from '@/app/utils/helpers';
 
 interface PDFUploaderProps {
-  onUploadComplete?: (fileId: string) => void;
+  onUploadComplete?: (fileId: string, fileName?: string) => void;
   className?: string;
 }
 
 export default function PDFUploader({ onUploadComplete, className }: PDFUploaderProps) {
-  const { files, isUploading, error, uploadFile, removeFile, clearError } = usePDFUpload();
+  const { files, isUploading, error, uploadFile, removeFile, resetAllFiles, clearError } = usePDFUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = useCallback(
@@ -21,7 +21,10 @@ export default function PDFUploader({ onUploadComplete, className }: PDFUploader
 
       const droppedFiles = Array.from(e.dataTransfer.files);
       if (droppedFiles.length > 0) {
-        uploadFile(droppedFiles[0], onUploadComplete);
+        const file = droppedFiles[0];
+        uploadFile(file, (fileId: string) => {
+          onUploadComplete?.(fileId, file.name);
+        });
       }
     },
     [uploadFile, onUploadComplete]
@@ -36,7 +39,10 @@ export default function PDFUploader({ onUploadComplete, className }: PDFUploader
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const selectedFiles = e.target.files;
       if (selectedFiles && selectedFiles.length > 0) {
-        uploadFile(selectedFiles[0], onUploadComplete);
+        const file = selectedFiles[0];
+        uploadFile(file, (fileId: string) => {
+          onUploadComplete?.(fileId, file.name);
+        });
       }
       // Reset input
       if (fileInputRef.current) {
@@ -159,7 +165,30 @@ export default function PDFUploader({ onUploadComplete, className }: PDFUploader
       {/* Uploaded Files List */}
       {files.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-medium">업로드된 파일</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">업로드된 파일</h3>
+            <button
+              onClick={resetAllFiles}
+              disabled={isUploading}
+              className="text-sm text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="h-4 w-4"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+                />
+              </svg>
+              모두 리셋
+            </button>
+          </div>
           <div className="space-y-2">
             {files.map((file) => (
               <div

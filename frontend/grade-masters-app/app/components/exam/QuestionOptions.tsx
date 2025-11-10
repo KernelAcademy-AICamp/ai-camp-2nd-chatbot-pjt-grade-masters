@@ -15,7 +15,7 @@ interface QuestionOptionsProps {
   availableTopics?: string[];
 }
 
-const QUESTION_COUNTS = [5, 10, 15, 20];
+const QUESTION_COUNTS = [3, 4, 5];
 
 export default function QuestionOptions({
   onGenerate,
@@ -24,7 +24,7 @@ export default function QuestionOptions({
 }: QuestionOptionsProps) {
   const [difficulty, setDifficulty] = useState<QuestionDifficulty>('medium');
   const [questionType, setQuestionType] = useState<QuestionType>('short_answer');
-  const [count, setCount] = useState(10);
+  const [count, setCount] = useState(4);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [showTopicSelector, setShowTopicSelector] = useState(false);
 
@@ -43,7 +43,7 @@ export default function QuestionOptions({
     );
   };
 
-  const estimatedTime = Math.ceil(count * 3); // ~3 seconds per question
+  const estimatedTime = Math.ceil(count * 10); // ~10 seconds per question for generation
 
   return (
     <div className="rounded-lg border bg-card p-6 space-y-6">
@@ -124,23 +124,28 @@ export default function QuestionOptions({
       {/* Question Count Selection */}
       <div className="space-y-3">
         <label className="text-sm font-medium">문제 개수</label>
-        <div className="grid grid-cols-4 gap-2">
-          {QUESTION_COUNTS.map((num) => (
-            <button
-              key={num}
-              onClick={() => setCount(num)}
-              disabled={isGenerating}
-              className={cn(
-                'py-2 px-3 rounded-lg border-2 font-medium transition-all',
-                count === num
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border hover:border-primary/50',
-                isGenerating && 'opacity-50 cursor-not-allowed'
-              )}
-            >
-              {num}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="grid grid-cols-3 gap-2 flex-1">
+            {QUESTION_COUNTS.map((num) => (
+              <button
+                key={num}
+                onClick={() => setCount(num)}
+                disabled={isGenerating}
+                className={cn(
+                  'py-2 px-3 rounded-lg border-2 font-medium transition-all',
+                  count === num
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border hover:border-primary/50',
+                  isGenerating && 'opacity-50 cursor-not-allowed'
+                )}
+              >
+                {num}개
+              </button>
+            ))}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            (백엔드 제한: 3~5개)
+          </div>
         </div>
       </div>
 

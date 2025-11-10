@@ -1,82 +1,122 @@
 'use client';
 
-import { useLearningStats } from '@/app/hooks/useLearningStats';
-import { cn, formatPercentage } from '@/app/utils/helpers';
+import { useAnalytics } from '@/app/hooks/useAnalytics';
+import { formatPercentage } from '@/app/utils/helpers';
 import StatCard from './StatCard';
 import ProgressChart from './ProgressChart';
 import WeakAreasChart from './WeakAreasChart';
 import RecommendationCard from './RecommendationCard';
 
 export default function Analytics() {
-  const { stats, getWeakAreas, getStrongAreas, getImprovementRate } =
-    useLearningStats();
+  const { overview, progress, weakTopics, wrongAnswers, studyTime, isLoading, error, refetch } =
+    useAnalytics();
 
-  const improvementRate = getImprovementRate();
-  const weakAreas = getWeakAreas();
-  const strongAreas = getStrongAreas();
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <p className="text-muted-foreground">학습 데이터를 불러오는 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  // Calculate study hours
-  const studyHours = Math.floor(stats.totalStudyTime / 60);
-  const studyMinutes = stats.totalStudyTime % 60;
+  // Error state
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6">
+          <div className="flex items-start space-x-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="h-6 w-6 text-destructive flex-shrink-0"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+              />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-destructive mb-2">
+                학습 데이터를 불러오는데 실패했습니다
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">{error.message}</p>
+              <button
+                onClick={refetch}
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                다시 시도
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No data state
+  if (!overview) {
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="rounded-lg border bg-card p-12 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="h-16 w-16 text-muted-foreground"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
+              />
+            </svg>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">아직 학습 데이터가 없습니다</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                PDF를 업로드하고 문제를 풀어보세요!
+              </p>
+              <a
+                href="/chat"
+                className="inline-block px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                학습 시작하기
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate derived values
+  const improvementRate =
+    progress?.trend === 'improving' ? 5 : progress?.trend === 'stable' ? 0 : -5;
+  const weakAreas =
+    weakTopics?.weak_topics.map((topic) => ({
+      topic: topic.document_name,
+      accuracy: topic.average_accuracy,
+    })) || [];
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">학습 분석</h1>
-        <p className="text-muted-foreground">
-          당신의 학습 현황과 성취도를 확인하세요
-        </p>
-      </div>
-
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="총 학습 시간"
-          value={`${studyHours}시간 ${studyMinutes}분`}
-          icon={
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="h-6 w-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          }
-          trend={improvementRate > 0 ? 'up' : improvementRate < 0 ? 'down' : undefined}
-        />
-
-        <StatCard
-          title="처리한 PDF"
-          value={`${stats.totalPDFsProcessed}개`}
-          icon={
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="h-6 w-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-              />
-            </svg>
-          }
-        />
-
-        <StatCard
-          title="풀이한 문제"
-          value={`${stats.totalQuestionsSolved}개`}
+          title="총 퀴즈 시도"
+          value={`${overview.total_quiz_attempts}회`}
           icon={
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -96,8 +136,50 @@ export default function Analytics() {
         />
 
         <StatCard
-          title="평균 점수"
-          value={formatPercentage(stats.averageScore)}
+          title="처리한 PDF"
+          value={`${overview.total_documents}개`}
+          icon={
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="h-6 w-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+              />
+            </svg>
+          }
+        />
+
+        <StatCard
+          title="생성된 퀴즈"
+          value={`${overview.total_quizzes}개`}
+          icon={
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="h-6 w-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          }
+        />
+
+        <StatCard
+          title="평균 정확도"
+          value={formatPercentage(overview.average_accuracy)}
           icon={
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -115,7 +197,9 @@ export default function Analytics() {
             </svg>
           }
           trend={improvementRate > 0 ? 'up' : improvementRate < 0 ? 'down' : undefined}
-          trendValue={improvementRate !== 0 ? `${improvementRate > 0 ? '+' : ''}${improvementRate}%` : undefined}
+          trendValue={
+            improvementRate !== 0 ? `${improvementRate > 0 ? '+' : ''}${improvementRate}%` : undefined
+          }
         />
       </div>
 
@@ -123,10 +207,10 @@ export default function Analytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Progress Chart */}
         <div className="rounded-lg border bg-card p-6">
-          <h3 className="text-lg font-semibold mb-4">학습 진도</h3>
+          <h3 className="text-lg font-semibold mb-4">학습 진행 상황</h3>
           <ProgressChart
-            totalQuestions={stats.totalQuestionsSolved}
-            averageScore={stats.averageScore}
+            recentResults={progress?.recent_results || []}
+            trend={progress?.trend || 'no_data'}
           />
         </div>
 
@@ -137,27 +221,27 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* Strong Areas */}
-      {strongAreas.length > 0 && (
+      {/* Study Time Analysis */}
+      {studyTime && studyTime.daily_stats.length > 0 && (
         <div className="rounded-lg border bg-card p-6">
-          <h3 className="text-lg font-semibold mb-4">강점 분야</h3>
-          <div className="space-y-3">
-            {strongAreas.map((area, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <span className="text-sm font-medium">{area.topic}</span>
-                <div className="flex items-center gap-3">
-                  <div className="w-48 h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-green-500 transition-all"
-                      style={{ width: `${area.accuracy}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-medium text-green-600 w-12 text-right">
-                    {formatPercentage(area.accuracy, 0)}
-                  </span>
-                </div>
-              </div>
-            ))}
+          <h3 className="text-lg font-semibold mb-4">학습 활동</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="p-4 rounded-lg bg-muted">
+              <p className="text-sm text-muted-foreground mb-1">활동 일수</p>
+              <p className="text-2xl font-bold">
+                {studyTime.active_days}/{studyTime.period_days}일
+              </p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted">
+              <p className="text-sm text-muted-foreground mb-1">총 퀴즈 시도</p>
+              <p className="text-2xl font-bold">{studyTime.total_quiz_attempts}회</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted">
+              <p className="text-sm text-muted-foreground mb-1">일평균 시도</p>
+              <p className="text-2xl font-bold">
+                {studyTime.average_daily_attempts.toFixed(1)}회
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -183,14 +267,16 @@ export default function Analytics() {
             </svg>
           }
         >
-          {weakAreas.length > 0 ? (
+          {weakTopics && weakTopics.weak_topics.length > 0 ? (
             <ul className="space-y-2 text-sm text-muted-foreground">
-              {weakAreas.slice(0, 3).map((area, index) => (
+              {weakTopics.weak_topics.slice(0, 3).map((topic, index) => (
                 <li key={index} className="flex items-start gap-2">
                   <span className="text-primary">•</span>
                   <span>
-                    <strong>{area.topic}</strong> 분야를 집중 학습하세요
-                    (정답률: {formatPercentage(area.accuracy, 0)})
+                    <strong>{topic.document_name}</strong> {topic.recommendation}
+                    <br />
+                    (정확도: {formatPercentage(topic.average_accuracy, 0)}, 시도:{' '}
+                    {topic.attempt_count}회)
                   </span>
                 </li>
               ))}
@@ -224,7 +310,7 @@ export default function Analytics() {
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
               <span className="text-primary">•</span>
-              <span>매일 30분 이상 꾸준히 학습하세요</span>
+              <span>매일 꾸준히 학습하여 습관을 만드세요</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary">•</span>
@@ -232,8 +318,16 @@ export default function Analytics() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary">•</span>
-              <span>다양한 난이도의 문제를 골고루 풀어보세요</span>
+              <span>다양한 주제의 문제를 골고루 풀어보세요</span>
             </li>
+            {wrongAnswers && wrongAnswers.pattern_analysis.total_wrong_answers > 5 && (
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-500">⚠</span>
+                <span className="text-yellow-600 dark:text-yellow-500">
+                  {wrongAnswers.pattern_analysis.recommendation}
+                </span>
+              </li>
+            )}
           </ul>
         </RecommendationCard>
       </div>

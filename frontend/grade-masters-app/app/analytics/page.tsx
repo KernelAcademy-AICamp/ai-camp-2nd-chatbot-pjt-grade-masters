@@ -1,11 +1,8 @@
 'use client';
 
-import { useLearningStats } from '@/app/hooks/useLearningStats';
 import Analytics from '@/app/components/analytics/Analytics';
 
 export default function AnalyticsPage() {
-  const { stats } = useLearningStats();
-
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto px-4">
@@ -18,7 +15,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Analytics Dashboard */}
-        <Analytics stats={stats} />
+        <Analytics />
 
         {/* Additional Information */}
         <div className="mt-8 p-6 rounded-lg border bg-card">
