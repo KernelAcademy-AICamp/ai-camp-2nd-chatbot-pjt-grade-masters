@@ -15,7 +15,7 @@ interface UseFileUploadReturn {
   files: PDFFile[];
   isUploading: boolean;
   error: UploadError | null;
-  uploadFile: (file: File) => Promise<void>;
+  uploadFile: (file: File, onComplete?: (fileId: string) => void) => Promise<void>;
   removeFile: (id: string) => void;
   clearError: () => void;
 }
@@ -29,7 +29,7 @@ export function usePDFUpload(): UseFileUploadReturn {
     setError(null);
   }, []);
 
-  const uploadFile = useCallback(async (file: File) => {
+  const uploadFile = useCallback(async (file: File, onComplete?: (fileId: string) => void) => {
     clearError();
 
     // Validate file type
@@ -64,11 +64,49 @@ export function usePDFUpload(): UseFileUploadReturn {
     setIsUploading(true);
 
     try {
-      // Upload to server
+      // TODO: Replace with actual API call when backend is ready
+      // Temporary mock upload for development
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Mock successful upload response
+      const mockResponse = {
+        success: true,
+        data: {
+          fileId: crypto.randomUUID(),
+          fileName: file.name,
+          fileSize: file.size,
+          pageCount: Math.floor(Math.random() * 50) + 10, // Random 10-60 pages
+          uploadedAt: new Date().toISOString(),
+        },
+      };
+
+      // Update file with mock response
+      setFiles(prev =>
+        prev.map(f =>
+          f.id === tempFile.id
+            ? {
+                ...f,
+                id: mockResponse.data.fileId,
+                status: 'completed' as const,
+                pageCount: mockResponse.data.pageCount,
+              }
+            : f
+        )
+      );
+
+      // Show success message
+      console.log(SUCCESS_MESSAGES.fileUpload);
+
+      // Call onComplete callback if provided
+      if (onComplete) {
+        onComplete(mockResponse.data.fileId);
+      }
+
+      /*
+      // Original API call (restore when backend is ready):
       const response = await uploadPDF(file);
 
       if (response.success && response.data) {
-        // Update file with server response
         setFiles(prev =>
           prev.map(f =>
             f.id === tempFile.id
@@ -81,12 +119,11 @@ export function usePDFUpload(): UseFileUploadReturn {
               : f
           )
         );
-
-        // Optional: Show success message
         console.log(SUCCESS_MESSAGES.fileUpload);
       } else {
         throw new Error(response.error || 'Upload failed');
       }
+      */
     } catch (err) {
       console.error('Upload error:', err);
 

@@ -21,10 +21,10 @@ export default function PDFUploader({ onUploadComplete, className }: PDFUploader
 
       const droppedFiles = Array.from(e.dataTransfer.files);
       if (droppedFiles.length > 0) {
-        uploadFile(droppedFiles[0]);
+        uploadFile(droppedFiles[0], onUploadComplete);
       }
     },
-    [uploadFile]
+    [uploadFile, onUploadComplete]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -36,14 +36,14 @@ export default function PDFUploader({ onUploadComplete, className }: PDFUploader
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const selectedFiles = e.target.files;
       if (selectedFiles && selectedFiles.length > 0) {
-        uploadFile(selectedFiles[0]);
+        uploadFile(selectedFiles[0], onUploadComplete);
       }
       // Reset input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     },
-    [uploadFile]
+    [uploadFile, onUploadComplete]
   );
 
   const handleClick = useCallback(() => {

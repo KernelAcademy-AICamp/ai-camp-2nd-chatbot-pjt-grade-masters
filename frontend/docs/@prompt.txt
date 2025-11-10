@@ -101,3 +101,5 @@ ChatGPT, Claude와 같은 대규모 언어모델(LLM)의 등장은 교육·업�
 NextJS를 기반으로 프로젝트는 이미 생성했으니 따로 생성 계획은 세우지 마세요.
 
 좋습니다. 자 이제 @execution_plan.md 에 따라 Phase 1 를 수행하고 완료된 미션에 대해서 완료 표시하세요.
+
+자 이제 @execution_plan.md 에 따라 Phase 2 를 수행하고 완료된 미션에 대해서 완료 표시하세요.

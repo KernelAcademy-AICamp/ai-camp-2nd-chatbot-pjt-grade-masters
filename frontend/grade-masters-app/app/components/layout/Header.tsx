@@ -10,6 +10,8 @@ import { cn } from '@/app/utils/helpers';
 const navigation = [
   { name: '홈', href: ROUTES.home },
   { name: '챗봇', href: ROUTES.chat },
+  { name: '오답노트', href: ROUTES.wrongAnswers },
+  { name: '학습분석', href: ROUTES.analytics },
   { name: '학습 기록', href: ROUTES.history },
   { name: '소개', href: ROUTES.about },
 ];

@@ -77,6 +77,8 @@ export const STORAGE_KEYS = {
   userSession: 'gm-user-session',
   uploadedFiles: 'gm-uploaded-files',
   examDraft: 'gm-exam-draft',
+  wrongAnswers: 'gm-wrong-answers',
+  learningStats: 'gm-learning-stats',
 } as const;
 
 // ========================================
