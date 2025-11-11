@@ -67,7 +67,11 @@ async def generate_quiz(
             "message": "퀴즈 생성 완료"
         }
 
+    except ValueError as e:
+        # OpenAI API 관련 에러 (인증, 사용량 제한 등)
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        # 기타 예상치 못한 에러
         raise HTTPException(status_code=500, detail=f"퀴즈 생성 중 오류 발생: {str(e)}")
 
 @router.post("/submit")
@@ -152,7 +156,11 @@ async def submit_quiz(
             "message": "채점 완료"
         }
 
+    except ValueError as e:
+        # OpenAI API 관련 에러
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        # 기타 예상치 못한 에러
         raise HTTPException(status_code=500, detail=f"채점 중 오류 발생: {str(e)}")
 
 @router.get("/{quiz_id}")

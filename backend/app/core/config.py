@@ -3,8 +3,8 @@ from typing import Optional
 import os
 from dotenv import load_dotenv
 
-# .env 파일 로드
-load_dotenv()
+# .env 파일 로드 (기존 환경 변수 덮어쓰기)
+load_dotenv(override=True)
 
 class Settings(BaseSettings):
     """애플리케이션 설정"""

@@ -1,4 +1,4 @@
-from openai import OpenAI
+from openai import OpenAI, AuthenticationError, APIError, RateLimitError
 from app.core.config import settings
 from app.core.cache import cache
 import hashlib
@@ -8,6 +8,9 @@ class OpenAIService:
     """OpenAI API 서비스"""
 
     def __init__(self):
+        if not settings.openai_api_key or settings.openai_api_key == "":
+            raise ValueError("OPENAI_API_KEY가 설정되지 않았습니다. .env 파일을 확인하세요.")
+
         self.client = OpenAI(
             api_key=settings.openai_api_key,
             timeout=settings.openai_timeout
@@ -50,19 +53,27 @@ class OpenAIService:
                 return cached_response
 
         # API 호출
-        response = self.client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=temperature
-        )
+        try:
+            response = self.client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature
+            )
 
-        result = response.choices[0].message.content
+            result = response.choices[0].message.content
 
-        # 캐시 저장
-        if use_cache:
-            cache.set(cache_key, result, expire=settings.cache_expire_seconds)
+            # 캐시 저장
+            if use_cache:
+                cache.set(cache_key, result, expire=settings.cache_expire_seconds)
 
-        return result
+            return result
+
+        except AuthenticationError as e:
+            raise ValueError(f"OpenAI API 인증 실패: API 키가 유효하지 않습니다. .env 파일의 OPENAI_API_KEY를 확인하세요.")
+        except RateLimitError as e:
+            raise ValueError(f"OpenAI API 사용량 한도 초과: 잠시 후 다시 시도하세요.")
+        except APIError as e:
+            raise ValueError(f"OpenAI API 오류: {str(e)}")
 
     async def vision_completion(
         self,
