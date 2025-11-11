@@ -3,11 +3,14 @@
 import { useState, useCallback, useEffect } from 'react';
 import { storage } from '../utils/helpers';
 import { STORAGE_KEYS } from '../utils/constants';
+import { getWrongAnswerAnalysis } from '../services/api';
 import type {
   WrongAnswer,
   Question,
   QuestionDifficulty,
   ExamResult,
+  WrongAnswerAnalysis,
+  WrongAnswerItem,
 } from '@/types';
 
 interface WrongAnswerFilter {
@@ -36,6 +39,9 @@ interface UseWrongAnswersReturn {
   filter: WrongAnswerFilter;
   sortBy: SortBy;
   sortOrder: SortOrder;
+  loading: boolean;
+  error: string | null;
+  recommendation: string;
   setFilter: (filter: WrongAnswerFilter) => void;
   setSorting: (sortBy: SortBy, sortOrder: SortOrder) => void;
   addWrongAnswers: (result: ExamResult, questions: Question[]) => void;
@@ -43,28 +49,78 @@ interface UseWrongAnswersReturn {
   retryQuestion: (id: string) => void;
   deleteWrongAnswer: (id: string) => void;
   clearAll: () => void;
+  refreshData: (limit?: number) => Promise<void>;
 }
+
+// Helper function to convert API WrongAnswerItem to frontend WrongAnswer
+const convertToWrongAnswer = (item: WrongAnswerItem): WrongAnswer => {
+  // Create a mock Question object from the API data
+  const question: Question = {
+    id: item.wrong_answer_id,
+    content: item.question,
+    type: 'short_answer', // Default type since API doesn't provide this
+    difficulty: 'medium', // Default difficulty since API doesn't provide this
+    points: 10, // Default points
+    topic: item.document_name, // Use document name as topic
+  };
+
+  return {
+    id: item.wrong_answer_id,
+    questionId: item.wrong_answer_id,
+    question,
+    userAnswer: item.user_answer,
+    correctAnswer: item.correct_answer,
+    feedback: item.explanation,
+    retryCount: 1,
+    lastRetryAt: new Date(item.created_at),
+    isResolved: false,
+  };
+};
 
 export function useWrongAnswers(): UseWrongAnswersReturn {
   const [wrongAnswers, setWrongAnswers] = useState<WrongAnswer[]>([]);
   const [filter, setFilter] = useState<WrongAnswerFilter>({});
   const [sortBy, setSortByState] = useState<SortBy>('date');
   const [sortOrder, setSortOrderState] = useState<SortOrder>('desc');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [recommendation, setRecommendation] = useState<string>('');
 
-  // Load wrong answers from localStorage on mount
-  useEffect(() => {
-    const saved = storage.get<WrongAnswer[]>(STORAGE_KEYS.wrongAnswers);
-    if (saved) {
-      setWrongAnswers(saved);
+  // Fetch wrong answers from backend API
+  const refreshData = useCallback(async (limit: number = 20) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response: WrongAnswerAnalysis = await getWrongAnswerAnalysis(limit);
+
+      // Convert API response to frontend format
+      const convertedAnswers = response.wrong_answers.map(convertToWrongAnswer);
+
+      setWrongAnswers(convertedAnswers);
+      setRecommendation(response.pattern_analysis.recommendation);
+
+      // Also save to localStorage as a backup
+      storage.set(STORAGE_KEYS.wrongAnswers, convertedAnswers);
+    } catch (err) {
+      console.error('Failed to fetch wrong answers:', err);
+      setError(err instanceof Error ? err.message : '오답 데이터를 불러오는데 실패했습니다.');
+
+      // Fallback to localStorage if API fails
+      const saved = storage.get<WrongAnswer[]>(STORAGE_KEYS.wrongAnswers);
+      if (saved) {
+        setWrongAnswers(saved);
+      }
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  // Save to localStorage whenever wrongAnswers change
+  // Load wrong answers on mount
   useEffect(() => {
-    if (wrongAnswers.length > 0) {
-      storage.set(STORAGE_KEYS.wrongAnswers, wrongAnswers);
-    }
-  }, [wrongAnswers]);
+    // Try to load from API first
+    refreshData();
+  }, [refreshData]);
 
   // Add wrong answers from exam result
   const addWrongAnswers = useCallback(
@@ -251,6 +307,9 @@ export function useWrongAnswers(): UseWrongAnswersReturn {
     filter,
     sortBy,
     sortOrder,
+    loading,
+    error,
+    recommendation,
     setFilter,
     setSorting,
     addWrongAnswers,
@@ -258,5 +317,6 @@ export function useWrongAnswers(): UseWrongAnswersReturn {
     retryQuestion,
     deleteWrongAnswer,
     clearAll,
+    refreshData,
   };
 }
