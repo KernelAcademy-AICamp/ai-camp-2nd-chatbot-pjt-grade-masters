@@ -36,10 +36,10 @@ export const FILE_CONFIG = {
 export const QUESTION_CONFIG = {
   difficulties: ['easy', 'medium', 'hard'] as const,
   types: ['essay', 'short_answer'] as const,
-  countOptions: [3, 4, 5] as const,
-  minCount: 3,
-  maxCount: 5,
-  defaultCount: 4,
+  countOptions: [5, 10, 15, 20] as const,
+  minCount: 5,
+  maxCount: 20,
+  defaultCount: 10,
   defaultDifficulty: 'medium' as const,
   defaultType: 'short_answer' as const,
 } as const;

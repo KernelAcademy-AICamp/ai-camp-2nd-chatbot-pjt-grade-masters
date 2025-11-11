@@ -11,7 +11,7 @@ router = APIRouter()
 class QuizGenerateRequest(BaseModel):
     """퀴즈 생성 요청 모델"""
     document_id: str
-    num_items: int = 4
+    num_items: int = 10
 
 class QuizSubmitRequest(BaseModel):
     """퀴즈 제출 요청 모델"""

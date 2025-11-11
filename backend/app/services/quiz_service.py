@@ -71,19 +71,19 @@ class QuizService:
 
         return final_keypoints
 
-    async def generate_quiz(self, full_text: str, num_items: int = 4) -> List[Dict[str, Any]]:
+    async def generate_quiz(self, full_text: str, num_items: int = 10) -> List[Dict[str, Any]]:
         """
         문서 기반 퀴즈 생성 (객관식/주관식)
         (Streamlit generate_quiz_from_doc 함수 이식)
 
         Args:
             full_text: 전체 문서 텍스트
-            num_items: 생성할 문항 수 (3~5)
+            num_items: 생성할 문항 수 (5, 10, 15, 20)
 
         Returns:
             퀴즈 문항 목록
         """
-        num_items = max(3, min(5, int(num_items)))
+        num_items = max(5, min(20, int(num_items)))
 
         # 핵심 키포인트 추출
         keypoints = await self._extract_keypoints_for_quiz(full_text)
