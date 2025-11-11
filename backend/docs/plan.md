@@ -88,7 +88,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # 3. 환경 변수 설정
-echo "OPENAI_API_KEY=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" > .env
+echo "OPENAI_API_KEY=OPENAI_API_KEY" > .env
 
 # 4. 서버 실행
 python run.py
